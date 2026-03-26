@@ -1,0 +1,14 @@
+openai
+mcp
+python-dotenv
+langchain
+langchain-openai
+langchain-mongodb
+pymongo
+certifi
+fastapi
+uvicorn
+langchain-text-splitters
+python-multipart
+pypdf
+python-docx
