@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 def check_stock(item):
     print(f"Checking {item} in store...")
-    time.sleep(3) # Blocking operation
+    time.sleep(3) 
     return f"{item} stock: 42"
 
 async def main():
