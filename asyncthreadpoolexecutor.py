@@ -11,6 +11,6 @@ async def main():
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as pool:
         result = await loop.run_in_executor(pool, check_stock, "Masala chai")
-        print(result)
+        # print(result)
 
 asyncio.run(main())
