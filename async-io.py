@@ -2,7 +2,7 @@ import asyncio
 import aiohttp 
 
 # fxn1 
-async def request(request):
+async def request(request):             # co-routine
     print(f"Requested : {request}")
     await asyncio.sleep(2)
     print(f"Response recieved for : {request}")
