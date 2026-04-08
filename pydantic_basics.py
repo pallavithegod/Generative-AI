@@ -24,6 +24,7 @@ class Prod(BaseModel):   # PROD IS A MODEL
 
     image_url: Optional[str] = None    # this field may/ may not be used 
 
+
 dict1 = {'cust_name' : "pallavi", 'pid' : '123', 'features' : ['black', 'good touch sense'], 'in_stock' : False, 'name' : "keyboard", 'price' : '500'}
 obj1 = Prod(**dict1)       #spread - needs to paas each entity seperately
 print(dict1)
