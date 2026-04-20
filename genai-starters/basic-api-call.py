@@ -1,3 +1,4 @@
+import os
 from openai import OpenAI
 from google import genai
 
@@ -5,25 +6,35 @@ from dotenv import load_dotenv
 load_dotenv()
 
 #OPENAI
-client = OpenAI()   # this automatically infers the apiKey etc. from their corresponding env var
-# Client WITH MORE PARAMS CAN BE USED IN THE SAME WAY AS #1 TO ACCESS GEMINI API THRU OPENAI, #2 NOT NEEDED
+client = OpenAI(                 # this gets apiKey from their corresponding env var
+    api_key = os.getenv("GEMINI_API_KEY"),
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+)  
+# STANDARDIZATION: Client WITH MORE PARAMS USED TO ACCESS GEMINI API THRU OPENAI, #2 NOT NEEDED
 
-question = "Name the richest individual on globe"
+# question = "Name the richest individual on globe"
+question = "square root of 23 upto 5 decimal places"
+
 response = client.chat.completions.create(
-    model="gpt-4.1-mini",
+    model="gemini-3-flash-preview",
     messages = [
+        {"role": "system", "content":"you are a expert in math and only answer math related questions. for math unrelated query, say sorry and do not answer the query"},
         {"role": "user", "content":question}
     ]
 )
 
-print("openai - " ,response.choices[0].message.content)
+print("gemini via openai - " ,response.choices[0].message.content)
 
-#GEMINI
-client2 = genai.Client()
+
+#GEMINI - less use
+client2 = genai.Client()       # this automatically infers the apiKey etc. from their corresponding env var
 
 response2 = client2.models.generate_content(
     model="gemini-3-flash-preview",
+    config={
+        "system_instruction": "you are a expert in math and only answer math related questions. for math unrelated query, say sorry and do not answer the query"
+    },
     contents = question
 )
 
-print("gemini - " ,response2.text) 
+# print("gemini - " ,response2.text) 
