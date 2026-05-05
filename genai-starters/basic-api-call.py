@@ -1,4 +1,4 @@
-import os
+import os, json
 from openai import OpenAI
 from google import genai
 
@@ -15,10 +15,17 @@ client = OpenAI(                 # this gets apiKey from their corresponding env
 # question = "Name the richest individual on globe"
 question = "square root of 23 upto 5 decimal places"
 
+sys_prompt = "you are a expert in math and only answer math related questions. for math unrelated query, say sorry and do not answer the query"
+# enhance the response by few shot prompting - 
+# rules: 
+# output format : eg json {"role": , "mode": ,  "ans":}
+# examples : 
+
+
 response = client.chat.completions.create(
     model="gemini-3-flash-preview",
     messages = [
-        {"role": "system", "content":"you are a expert in math and only answer math related questions. for math unrelated query, say sorry and do not answer the query"},
+        {"role": "system", "content":sys_prompt},
         {"role": "user", "content":question}
     ]
 )
@@ -37,4 +44,4 @@ response2 = client2.models.generate_content(
     contents = question
 )
 
-# print("gemini - " ,response2.text) 
+# print("gemini - ", response2.text)    
