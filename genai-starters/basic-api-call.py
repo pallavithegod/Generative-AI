@@ -10,17 +10,13 @@ client = OpenAI(                 # this gets apiKey from their corresponding env
     api_key = os.getenv("GEMINI_API_KEY"),
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )  
-# STANDARDIZATION: Client WITH MORE PARAMS USED TO ACCESS GEMINI API THRU OPENAI, #2 NOT NEEDED
+# STANDARDIZATION: Client WITH MORE PARAMS USED TO ACCESS GEMINI API THRU OPENAI, hence #2 NOT NEEDED
 
 # question = "Name the richest individual on globe"
 question = "square root of 23 upto 5 decimal places"
 
+# one-shot prompt
 sys_prompt = "you are a expert in math and only answer math related questions. for math unrelated query, say sorry and do not answer the query"
-# enhance the response by few shot prompting - 
-# rules: 
-# output format : eg json {"role": , "mode": ,  "ans":}
-# examples : 
-
 
 response = client.chat.completions.create(
     model="gemini-3-flash-preview",
