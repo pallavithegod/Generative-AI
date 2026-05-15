@@ -14,9 +14,40 @@ def run_command(cmd: str):
     result = subprocess.getoutput(cmd)
     return result
 
+def write_file(filepath: str, file_content: str):
+    print(f"\n📝 WRITING FILE: {filepath}")
+    try:
+        
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(file_content)
+        return f"Success: File '{filepath}' created successfully."
+    except Exception as e:
+        return f"Error writing file: {e}"
+
 available_tools = {
-    "run_command" : run_command
+    "run_command" : run_command,
+    "write_file": write_file
 }
+
+# system_prompt = """
+# You are an expert Autonomous AI Assistant.
+# You solve problems by using a loop of PLAN -> TOOL_CALL -> OUTPUT.
+
+# Rules:
+# 1. Break down the task into logical steps.
+# 2. If you need to interact with the computer, output a 'tool_call' step.
+# 3. Wait for the user system to provide the OBSERVATION from your tool.
+# 4. Once the task is complete, provide an 'output' step.
+
+# File Creation Rules (CRITICAL):
+# 5. To create or modify files via system commands, ALWAYS use the `cat << 'EOF' > filepath/filename.ext` pattern.
+# 6. NEVER compress code into single-line `echo` statements with escaped newlines.
+
+# Example:
+# cat << 'EOF' > app.py
+# print("Hello World")
+# EOF
+# """
 
 system_prompt = """
 You are an expert Autonomous AI Assistant.
@@ -28,20 +59,18 @@ Rules:
 3. Wait for the user system to provide the OBSERVATION from your tool.
 4. Once the task is complete, provide an 'output' step.
 
-File Creation Rules (CRITICAL):
-5. To create or modify files via system commands, ALWAYS use the `cat << 'EOF' > filepath/filename.ext` pattern.
-6. NEVER compress code into single-line `echo` statements with escaped newlines.
-
-Example:
-cat << 'EOF' > app.py
-print("Hello World")
-EOF
+Available Tools:
+- 'run_command': Use this to run terminal commands (e.g., mkdir, npm install, dir).
+- 'write_file': Use this to create or modify code files. Provide the 'filepath' and clean, multi-line 'file_content'. NEVER use run_command to echo or cat text into a file.
 """
+
 class output_format(BaseModel):
     step: str = Field(..., description="Must be exactly one of: 'plan', 'tool_call', 'output'")
     content: Optional[str] = Field(None, description="Your thought process or final answer")
-    tool: Optional[str] = Field(None, description="Name of the tool, exactly 'run_command'")
-    input: Optional[str] = Field(None, description="The system command to execute (e.g., 'mkdir my_app')")
+    tool: Optional[str] = Field(None, description="Name of the tool: 'run_command' or 'write_file'")
+    input: Optional[str] = Field(None, description="The system command to execute (if using run_command)")
+    filepath: Optional[str] = Field(None, description="Path of the file to save (if using write_file)")
+    file_content: Optional[str] = Field(None, description="The multi-line code/text to save (if using write_file)")
 
 
 msg_history = [{"role": "system", "content": system_prompt}]
@@ -72,24 +101,34 @@ while True:
 
         # 2. AI decides it needs to run a terminal cmd
         elif ai_response.step == "tool_call":
-            print(f"🛠️ TOOL DECISION: Needs to run '{ai_response.tool}' with command:\n[{ai_response.input}]")
+            print(f"🛠️ TOOL DECISION: Needs to run '{ai_response.tool}'")
 
-            if ai_response.tool in available_tools:
-                # Execute the tool
-                cmd_output = available_tools[ai_response.tool](ai_response.input)
-                #  
+            if ai_response.tool == "run_command":
+                print(f"[{ai_response.input}]")
+                cmd_output = available_tools["run_command"](ai_response.input)
+                # availabl_tools = dict
+                # ai_response.tool = run_command (for now)
+                # ai_response.input = terminal command to execute
+                # hence, run_command(mkdir tic-tac-toe)
 
-                print(f"🖥️ SYSTEM OUTPUT:\n{cmd_output}\n")
+            elif ai_response.tool == "write_file":
+                print(f"[Target: {ai_response.filepath}]")
+                cmd_output = available_tools["write_file"](ai_response.filepath, ai_response.file_content)
+            
+            else:
+                cmd_output = f"⚠️ ERROR: Tool '{ai_response.tool}' does not exist."
+                
+            print(f"🖥️ SYSTEM OUTPUT:\n{cmd_output}\n")    
 
-                msg_history.append({
+            msg_history.append({
                     "role": "user", 
                     "content": f"OBSERVATION from {ai_response.tool}:\n{cmd_output}\nWhat is the next step?"
                 })
 
-            else:
-                # Failsafe
-                print(f"⚠️ ERROR: Tool '{ai_response.tool}' does not exist.")
-                msg_history.append({"role": "user", "content": f"OBSERVATION: Tool {ai_response.tool} failed. Tool not found."})
+            # else:
+            #     # Failsafe
+            #     print(f"⚠️ ERROR: Tool '{ai_response.tool}' does not exist.")
+            #     msg_history.append({"role": "user", "content": f"OBSERVATION: Tool {ai_response.tool} failed. Tool not found."})
 
         # 3. task completed successfully
         elif ai_response.step == "output":
