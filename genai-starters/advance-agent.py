@@ -14,40 +14,39 @@ def run_command(cmd: str):
     result = subprocess.getoutput(cmd)
     return result
 
+# Directory Confinement (Sandboxing)
 def write_file(filepath: str, file_content: str):
     print(f"\n📝 WRITING FILE: {filepath}")
     try:
-        
+        # sandbox= cwd
+        # abspath turn relative path to full
+        workspace_dir = os.path.abspath(os.getcwd())
+
+        # see the path that the ai has requested
+        target_path = os.path.abspath(filepath)
+
+        # intersection of path = common path to check
+        if os.path.commonpath([workspace_dir, target_path]) != workspace_dir:
+            print("🛑 SECURITY BLOCK: Agent tried to escape the sandbox!")
+            return f"Access Denied: You are restricted to the workspace folder ({workspace_dir}). You cannot access or modify external files."
+
+        # ensures subdir exist fisr where ai want to work
+        target_dir = os.path.dirname(target_path)
+        if target_dir:
+            os.makedirs(target_dir, exist_ok = True)
+
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(file_content)
+
         return f"Success: File '{filepath}' created successfully."
+    
     except Exception as e:
         return f"Error writing file: {e}"
-
+    
 available_tools = {
-    "run_command" : run_command,
+    "run_command": run_command,
     "write_file": write_file
 }
-
-# system_prompt = """
-# You are an expert Autonomous AI Assistant.
-# You solve problems by using a loop of PLAN -> TOOL_CALL -> OUTPUT.
-
-# Rules:
-# 1. Break down the task into logical steps.
-# 2. If you need to interact with the computer, output a 'tool_call' step.
-# 3. Wait for the user system to provide the OBSERVATION from your tool.
-# 4. Once the task is complete, provide an 'output' step.
-
-# File Creation Rules (CRITICAL):
-# 5. To create or modify files via system commands, ALWAYS use the `cat << 'EOF' > filepath/filename.ext` pattern.
-# 6. NEVER compress code into single-line `echo` statements with escaped newlines.
-
-# Example:
-# cat << 'EOF' > app.py
-# print("Hello World")
-# EOF
-# """
 
 system_prompt = """
 You are an expert Autonomous AI Assistant.
@@ -107,7 +106,7 @@ while True:
                 print(f"[{ai_response.input}]")
                 cmd_output = available_tools["run_command"](ai_response.input)
                 # availabl_tools = dict
-                # ai_response.tool = run_command (for now)
+                # ai_response.tool = run_command (here)
                 # ai_response.input = terminal command to execute
                 # hence, run_command(mkdir tic-tac-toe)
 
@@ -116,19 +115,15 @@ while True:
                 cmd_output = available_tools["write_file"](ai_response.filepath, ai_response.file_content)
             
             else:
+                # Failsafe
                 cmd_output = f"⚠️ ERROR: Tool '{ai_response.tool}' does not exist."
-                
-            print(f"🖥️ SYSTEM OUTPUT:\n{cmd_output}\n")    
 
+
+            print(f"🖥️ SYSTEM OUTPUT:\n{cmd_output}\n")    
             msg_history.append({
                     "role": "user", 
                     "content": f"OBSERVATION from {ai_response.tool}:\n{cmd_output}\nWhat is the next step?"
-                })
-
-            # else:
-            #     # Failsafe
-            #     print(f"⚠️ ERROR: Tool '{ai_response.tool}' does not exist.")
-            #     msg_history.append({"role": "user", "content": f"OBSERVATION: Tool {ai_response.tool} failed. Tool not found."})
+            })
 
         # 3. task completed successfully
         elif ai_response.step == "output":
